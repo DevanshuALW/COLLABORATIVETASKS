@@ -7,15 +7,51 @@ async function throwIfResNotOk(res: Response) {
   }
 }
 
+// Get CSRF token from cookie
+function getCsrfToken(): string | null {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [name, value] = cookie.trim().split('=');
+    if (name === 'XSRF-TOKEN') {
+      return decodeURIComponent(value);
+    }
+  }
+  return null;
+}
+
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  // Get CSRF token
+  const csrfToken = getCsrfToken();
+
+  // Prepare headers
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  // Add CSRF token for non-GET requests
+  if (method !== 'GET' && csrfToken) {
+    headers['X-CSRF-Token'] = csrfToken;
+  }
+
+  // Prepare request body
+  let body: string | undefined = undefined;
+  if (data) {
+    // Add CSRF token to the request body as well
+    if (method !== 'GET' && csrfToken) {
+      body = JSON.stringify({ ...data, _csrf: csrfToken });
+    } else {
+      body = JSON.stringify(data);
+    }
+  }
+
   const res = await fetch(url, {
     method,
-    headers: data ? { "Content-Type": "application/json" } : {},
-    body: data ? JSON.stringify(data) : undefined,
+    headers,
+    body,
     credentials: "include",
   });
 
@@ -29,8 +65,15 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    // Get CSRF token for potential future requests
+    const csrfToken = getCsrfToken();
+
     const res = await fetch(queryKey[0] as string, {
       credentials: "include",
+      headers: {
+        // Add CSRF token to headers for all requests
+        ...(csrfToken ? { 'X-CSRF-Token': csrfToken } : {})
+      }
     });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {

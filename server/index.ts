@@ -1,10 +1,20 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { securityHeaders } from "./middleware/security-headers";
+import { setCsrfToken } from "./middleware/csrf";
 
 const app = express();
+
+// Apply security headers
+app.use(securityHeaders);
+
+// Parse JSON and URL-encoded bodies
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+
+// Set CSRF token
+app.use(setCsrfToken);
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -43,8 +53,12 @@ app.use((req, res, next) => {
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
+    // Log the error for debugging
+    console.error(`Error: ${status} - ${message}`, err);
+
+    // Send response to client
     res.status(status).json({ message });
-    throw err;
+    // Don't throw the error again as it will cause unhandled promise rejection
   });
 
   // importantly only setup vite in development and after
@@ -56,15 +70,15 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // ALWAYS serve the app on port 5000
-  // this serves both the API and the client.
-  // It is the only port that is not firewalled.
-  const port = 5000;
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`serving on port ${port}`);
-  });
+  // In development, listen on port 5000
+  // In production (Vercel), this will be handled by Vercel's serverless functions
+  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+    const port = process.env.PORT || 5000;
+    server.listen(port, () => {
+      log(`serving on port ${port}`);
+    });
+  }
+
+  // For Vercel serverless deployment
+  export default app;
 })();

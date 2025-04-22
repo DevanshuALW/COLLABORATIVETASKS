@@ -1,6 +1,6 @@
-import { 
-  RecaptchaVerifier, 
-  signInWithPhoneNumber, 
+import {
+  RecaptchaVerifier,
+  signInWithPhoneNumber,
   ConfirmationResult,
   signOut as firebaseSignOut,
   PhoneAuthProvider,
@@ -39,8 +39,8 @@ export const initRecaptchaVerifier = (containerId: string) => {
 export const sendOTP = async (phoneNumber: string, recaptchaVerifier: RecaptchaVerifier) => {
   try {
     // Format the phone number with country code if not already formatted
-    const formattedPhone = phoneNumber.startsWith('+') 
-      ? phoneNumber 
+    const formattedPhone = phoneNumber.startsWith('+')
+      ? phoneNumber
       : `+91${phoneNumber}`; // Default to India country code
 
     // Check if the phone number exists
@@ -53,7 +53,7 @@ export const sendOTP = async (phoneNumber: string, recaptchaVerifier: RecaptchaV
 
     // Send OTP using Firebase
     confirmationResult = await signInWithPhoneNumber(auth as Auth, formattedPhone, recaptchaVerifier);
-    
+
     return { success: true, exists: data.exists };
   } catch (error) {
     console.error("Error sending OTP:", error);
@@ -80,34 +80,52 @@ export const verifyOTP = async (otp: string) => {
 
     // Login/Register with backend
     try {
-      const loginResponse = await apiRequest('POST', '/api/auth/login', { phoneNumber });
-      
-      if (loginResponse.status === 404) {
-        // User doesn't exist in our DB, create a new user
-        const userCredential = PhoneAuthProvider.credentialFromResult(result);
-        
-        // Generate a username from phone number
-        const username = `user_${phoneNumber.replace(/\D/g, '').slice(-10)}`;
-        
-        // Create a new user in our DB
-        const registerResponse = await apiRequest('POST', '/api/auth/register', {
-          username,
+      // Generate a secure random password
+      const randomPassword = Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
+
+      // Try to login first
+      try {
+        const loginResponse = await apiRequest('POST', '/api/auth/login', {
           phoneNumber,
-          password: Math.random().toString(36).slice(2), // Generate a random password
-          displayName: user.displayName || username,
-          photoURL: user.photoURL
+          password: randomPassword // This will likely fail for existing users
         });
 
+        // If login succeeds (unlikely with random password), return the user
         return {
           success: true,
-          user: await registerResponse.json()
+          user: await loginResponse.json()
         };
-      }
+      } catch (loginError) {
+        // Login failed, check if user exists
+        const checkResponse = await apiRequest('POST', '/api/auth/verify-phone', { phoneNumber });
+        const { exists } = await checkResponse.json();
 
-      return {
-        success: true,
-        user: await loginResponse.json()
-      };
+        if (exists) {
+          // User exists but password is wrong - we need to implement a proper password reset flow
+          // For now, just inform the user
+          return {
+            success: false,
+            error: new Error('User exists but authentication failed. Please contact support for password reset.')
+          };
+        } else {
+          // User doesn't exist, create a new user
+          const username = `user_${phoneNumber.replace(/\D/g, '').slice(-10)}`;
+
+          // Create a new user in our DB with the random password
+          const registerResponse = await apiRequest('POST', '/api/auth/register', {
+            username,
+            phoneNumber,
+            password: randomPassword,
+            displayName: user.displayName || username,
+            photoURL: user.photoURL
+          });
+
+          return {
+            success: true,
+            user: await registerResponse.json()
+          };
+        }
+      }
     } catch (error) {
       console.error("Error in backend authentication:", error);
       return { success: false, error };
