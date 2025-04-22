@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { User } from "@shared/schema";
 import { auth } from "../firebase";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, Auth } from "firebase/auth";
 import { signOut } from "../auth";
 import { useToast } from "@/hooks/use-toast";
 
@@ -12,9 +12,15 @@ type AuthContextType = {
   logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+// Create context with default values
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  setUser: () => {},
+  logout: async () => {}
+});
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
@@ -32,16 +38,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    // Listen for Firebase auth state changes
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (!firebaseUser && user) {
-        // Firebase says user is logged out but we have a user in state
-        // This is typically when Firebase token expires but our app still thinks user is logged in
-        localStorage.removeItem("user");
-        setUser(null);
+    let unsubscribe = () => {};
+
+    try {
+      // Only set up auth state listener if Firebase auth is available
+      if (auth) {
+        unsubscribe = onAuthStateChanged(auth as Auth, (firebaseUser) => {
+          if (!firebaseUser && user) {
+            // Firebase says user is logged out but we have a user in state
+            localStorage.removeItem("user");
+            setUser(null);
+          }
+          setLoading(false);
+        });
+      } else {
+        console.error("Firebase auth not initialized");
+        setLoading(false);
       }
+    } catch (error) {
+      console.error("Error setting up auth state listener:", error);
       setLoading(false);
-    });
+    }
 
     return () => unsubscribe();
   }, [user]);
@@ -72,17 +89,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const value = {
+    user,
+    loading,
+    setUser,
+    logout
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, setUser, logout }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+export function useAuth() {
+  return useContext(AuthContext);
+}

@@ -47,8 +47,12 @@ export const sendOTP = async (phoneNumber: string, recaptchaVerifier: RecaptchaV
     const response = await apiRequest('POST', '/api/auth/verify-phone', { phoneNumber: formattedPhone });
     const data = await response.json();
 
+    if (!auth) {
+      throw new Error("Firebase Auth not initialized");
+    }
+
     // Send OTP using Firebase
-    confirmationResult = await signInWithPhoneNumber(auth, formattedPhone, recaptchaVerifier);
+    confirmationResult = await signInWithPhoneNumber(auth as Auth, formattedPhone, recaptchaVerifier);
     
     return { success: true, exists: data.exists };
   } catch (error) {
@@ -89,7 +93,7 @@ export const verifyOTP = async (otp: string) => {
         const registerResponse = await apiRequest('POST', '/api/auth/register', {
           username,
           phoneNumber,
-          password: userCredential?.secret || Math.random().toString(36).slice(2),
+          password: Math.random().toString(36).slice(2), // Generate a random password
           displayName: user.displayName || username,
           photoURL: user.photoURL
         });
@@ -117,7 +121,10 @@ export const verifyOTP = async (otp: string) => {
 // Sign out the user
 export const signOut = async () => {
   try {
-    await firebaseSignOut(auth);
+    if (!auth) {
+      return { success: true }; // If auth is not initialized, we're already "signed out"
+    }
+    await firebaseSignOut(auth as Auth);
     return { success: true };
   } catch (error) {
     console.error("Error signing out:", error);
