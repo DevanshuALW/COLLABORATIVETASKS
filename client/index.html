@@ -1,13 +1,234 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full">
   <head>
+    <!-- Essential Meta Tags -->
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    
+    <!-- Security Headers -->
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self'; 
+              connect-src 'self' https://*.firebase.com https://*.googleapis.com; 
+              script-src 'self' 'unsafe-inline' https://*.firebaseapp.com; 
+              style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; 
+              font-src 'self' https://fonts.gstatic.com;
+              img-src 'self' data: https://*.googleapis.com https://*.gstatic.com;
+              frame-src 'self' https://*.firebaseapp.com;">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="TaskHub - Collaborative task management application for teams. Organize, track, and complete projects efficiently." />
+    <meta name="keywords" content="task management, project management, team collaboration, productivity" />
+    <meta name="author" content="TaskHub" />
+    <meta name="theme-color" content="#2563eb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#1e40af" media="(prefers-color-scheme: dark)" />
+    
+    <!-- Mobile Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- Open Graph / Social Media -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TaskHub - Collaborative Task Management" />
+    <meta property="og:description" content="Streamline your team's workflow with TaskHub's collaborative task management platform" />
+    <meta property="og:site_name" content="TaskHub" />
+    <meta property="og:image" content="/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    
+    <!-- PWA Assets -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.json" crossorigin="use-credentials" />
+    
+    <!-- Resource Hints -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://firebaseapp.com" crossorigin />
+    <link rel="dns-prefetch" href="https://firebaseapp.com" />
+    <link rel="preconnect" href="/api" crossorigin />
+    
+    <!-- Preload Critical Assets -->
+    <link rel="preload" href="/src/index.css" as="style" />
+    <link rel="preload" href="/src/main.tsx" as="script" type="module" />
+    <link rel="preload" href="/fonts/inter-var.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
+    />
+    
+    <!-- Critical CSS -->
+    <style>
+      /* Modern CSS Reset and Critical Styles */
+      :root {
+        color-scheme: light dark;
+        accent-color: #2563eb;
+      }
+      
+      html {
+        background-color: #f9fafb;
+        height: 100%;
+        -webkit-text-size-adjust: 100%;
+        -moz-tab-size: 4;
+        tab-size: 4;
+        font-feature-settings: normal;
+        font-variation-settings: normal;
+      }
+      
+      @media (prefers-color-scheme: dark) {
+        html {
+          background-color: #111827;
+        }
+      }
+      
+      body {
+        margin: 0;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        line-height: 1.5;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        height: 100%;
+      }
+      
+      #root {
+        height: 100%;
+        isolation: isolate;
+      }
+      
+      .loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        color: #2563eb;
+      }
+      
+      .loading svg {
+        animation: spin 1s linear infinite;
+      }
+      
+      @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+      }
+      
+      @media (prefers-reduced-motion: reduce) {
+        .loading svg {
+          animation: none;
+        }
+      }
+      
+      .noscript-message {
+        display: none;
+        padding: 2rem;
+        text-align: center;
+        font-family: system-ui, sans-serif;
+      }
+      
+      noscript .noscript-message {
+        display: block;
+      }
+    </style>
+    
+    <title>TaskHub - Collaborative Task Management</title>
   </head>
   <body>
-    <div id="root"></div>
+    <noscript>
+      <div class="noscript-message">
+        <h1>JavaScript Required</h1>
+        <p>TaskHub requires JavaScript to provide you with the best possible experience. Please enable JavaScript and reload the page.</p>
+      </div>
+    </noscript>
+    
+    <div id="root">
+      <div class="loading" role="status" aria-label="Loading application">
+        <svg
+          width="24"
+          height="24"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          aria-hidden="true"
+        >
+          <line x1="12" y1="2" x2="12" y2="6" />
+          <line x1="12" y1="18" x2="12" y2="22" />
+          <line x1="4.93" y1="4.93" x2="7.76" y2="7.76" />
+          <line x1="16.24" y1="16.24" x2="19.07" y2="19.07" />
+          <line x1="2" y1="12" x2="6" y2="12" />
+          <line x1="18" y1="12" x2="22" y2="12" />
+          <line x1="4.93" y1="19.07" x2="7.76" y2="16.24" />
+          <line x1="16.24" y1="7.76" x2="19.07" y2="4.93" />
+        </svg>
+      </div>
+    </div>
+    
+    <!-- Error Handling -->
+    <script>
+      // Global error handler
+      window.onerror = function(message, source, lineno, colno, error) {
+        console.error('Global error:', { message, source, lineno, colno, error });
+        
+        // Report error to backend
+        fetch('/api/error-log', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Error-Type': 'client'
+          },
+          body: JSON.stringify({
+            message,
+            source,
+            lineno,
+            colno,
+            stack: error?.stack,
+            userAgent: navigator.userAgent,
+            timestamp: new Date().toISOString()
+          })
+        }).catch(console.error);
+      };
+
+      // Performance monitoring
+      if ('performance' in window) {
+        window.addEventListener('load', () => {
+          const timing = performance.getEntriesByType('navigation')[0];
+          const metrics = {
+            dns: timing.domainLookupEnd - timing.domainLookupStart,
+            tcp: timing.connectEnd - timing.connectStart,
+            ttfb: timing.responseStart - timing.requestStart,
+            dcl: timing.domContentLoadedEventEnd - timing.navigationStart,
+            load: timing.loadEventEnd - timing.navigationStart
+          };
+          console.log('Performance metrics:', metrics);
+        });
+      }
+    </script>
+    
+    <!-- Main Application -->
     <script type="module" src="/src/main.tsx"></script>
-    <!-- This is a replit script which adds a banner on the top of the page when opened in development mode outside the replit environment -->
-    <script type="text/javascript" src="https://replit.com/public/js/replit-dev-banner.js"></script>
+    
+    <!-- Firebase Configuration -->
+    <script type="module">
+      try {
+        window.FIREBASE_CONFIG = {
+          apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+          projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+          appId: import.meta.env.VITE_FIREBASE_APP_ID,
+          measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+        };
+      } catch (error) {
+        console.error('Failed to initialize Firebase config:', error);
+      }
+    </script>
   </body>
 </html>
