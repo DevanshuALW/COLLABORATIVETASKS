@@ -46,6 +46,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Export app for testing purposes
+export default app;
+
 (async () => {
   const server = await registerRoutes(app);
 
@@ -70,15 +73,10 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  // In development, listen on port 5000
-  // In production (Vercel), this will be handled by Vercel's serverless functions
-  if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
-    const port = process.env.PORT || 5000;
-    server.listen(port, () => {
-      log(`serving on port ${port}`);
-    });
-  }
-
-  // For Vercel serverless deployment
-  export default app;
+  // Listen on port 5000 or the port specified in environment variables
+  const port = process.env.PORT || 5000;
+  server.listen(port, () => {
+    log(`serving on port ${port}`);
+  });
 })();
+
